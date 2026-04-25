@@ -435,6 +435,19 @@
       cross-environment accuracy &mdash; without firmware patching or CSI
       extraction.
     </p>
+
+    <figure style="margin-top:28px">
+      <img src="figures/fig01_overview.png" alt="Overall architecture of the proposed BFM-based HLD framework" loading="lazy">
+      <figcaption>
+        <strong>Overall architecture.</strong> (A) Data Acquisition (DAQ):
+        compressed IEEE&nbsp;802.11ac VHT beamforming feedback is captured from
+        a router-monitor pair. (B) Rigorous Feature Engineering: BFM ratio,
+        magnitude-based filtering, PCA, Winsorization, robust moving
+        standardization, and 3rd-order LMAD. (C) Selecting the best n-order via
+        AUC and worst-case separation margin. (D) Lightweight classification
+        with logistic regression. (E) Real-time HLD on the held-out cohort.
+      </figcaption>
+    </figure>
   </div>
 </section>
 
