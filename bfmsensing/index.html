@@ -3,19 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BFM Sensing &mdash; WiFi-based Activity Recognition</title>
-<meta name="description" content="Device-free human activity recognition from IEEE 802.11 compressed beamforming reports captured on a commodity OpenWrt router.">
+<title>BFM Sensing &mdash; Firmware-Agnostic Human Locomotion Detection</title>
+<meta name="description" content="A firmware-agnostic framework for human locomotion detection using quasi-monostatic compressed beamforming feedback from a single commodity 802.11ac access point.">
 <style>
   :root {
     --bg: #0b1020;
     --bg-soft: #131a2e;
+    --bg-soft-2: #182142;
     --fg: #e7ecf3;
     --muted: #8b95ad;
     --accent: #6aa6ff;
     --accent-2: #9d7bff;
     --rule: #243054;
     --code-bg: #0e1426;
-    --max: 1080px;
+    --max: 1100px;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -25,12 +26,13 @@
                 var(--bg);
     color: var(--fg);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    line-height: 1.6;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
   }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
   .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
   header.hero {
     padding: 96px 0 56px;
     text-align: center;
@@ -45,9 +47,9 @@
     margin-bottom: 18px;
   }
   h1 {
-    font-size: clamp(34px, 5vw, 56px);
-    margin: 0 0 16px;
-    line-height: 1.1;
+    font-size: clamp(30px, 4.6vw, 50px);
+    margin: 0 0 18px;
+    line-height: 1.12;
     position: relative;
     display: inline-block;
     background: linear-gradient(
@@ -86,7 +88,7 @@
   .lede {
     font-size: 18px;
     color: var(--muted);
-    max-width: 700px;
+    max-width: 780px;
     margin: 0 auto 28px;
   }
   .cta {
@@ -111,16 +113,27 @@
     border-color: transparent;
     color: #0b1020;
   }
-  section { padding: 56px 0; border-bottom: 1px solid var(--rule); }
-  section h2 {
-    font-size: 28px;
-    margin: 0 0 12px;
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(106,166,255,0.12);
+    color: var(--accent);
+    font-size: 12px;
+    margin: 0 4px 4px 0;
   }
+
+  section { padding: 64px 0; border-bottom: 1px solid var(--rule); }
+  section h2 { font-size: 28px; margin: 0 0 12px; }
   section p.section-lede {
     color: var(--muted);
     margin: 0 0 28px;
-    max-width: 720px;
+    max-width: 780px;
   }
+  section p { margin: 0 0 16px; }
+  section ul { padding-left: 22px; margin: 0 0 16px; }
+  section ul li { margin: 6px 0; }
+  section h3 { margin: 28px 0 12px; font-size: 19px; }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -139,6 +152,29 @@
     letter-spacing: 0.02em;
   }
   .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .stat {
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 22px;
+    text-align: center;
+  }
+  .stat .num {
+    font-size: 30px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1;
+  }
+  .stat .label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 8px;
+    letter-spacing: 0.06em;
+  }
+
   figure {
     margin: 0;
     background: var(--bg-soft);
@@ -156,12 +192,86 @@
     color: var(--muted);
     font-size: 13px;
     margin-top: 10px;
-    text-align: center;
+    line-height: 1.55;
   }
   .figure-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 18px;
+  }
+
+  ol.pipeline {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  ol.pipeline > li {
+    counter-increment: step;
+    position: relative;
+    padding: 18px 20px 18px 64px;
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  ol.pipeline > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b1020;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  ol.pipeline strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--fg);
+    font-size: 16px;
+  }
+  ol.pipeline p { color: var(--muted); margin: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  th, td {
+    border-bottom: 1px solid var(--rule);
+    padding: 12px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 12px;
+    background: var(--bg-soft-2);
+  }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.highlight td {
+    background: rgba(106,166,255,0.08);
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
   }
   pre {
     background: var(--code-bg);
@@ -172,65 +282,9 @@
     font-size: 13px;
     line-height: 1.55;
   }
-  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  ol.steps {
-    counter-reset: step;
-    list-style: none;
-    padding: 0;
-  }
-  ol.steps > li {
-    counter-increment: step;
-    position: relative;
-    padding: 16px 18px 16px 60px;
-    background: var(--bg-soft);
-    border: 1px solid var(--rule);
-    border-radius: 12px;
-    margin-bottom: 12px;
-  }
-  ol.steps > li::before {
-    content: counter(step);
-    position: absolute;
-    left: 16px;
-    top: 16px;
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    display: grid; place-items: center;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #0b1020;
-    font-weight: 700;
-    font-size: 14px;
-  }
-  ol.steps strong { display: block; margin-bottom: 4px; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-  th, td {
-    border-bottom: 1px solid var(--rule);
-    padding: 10px 8px;
-    text-align: left;
-    vertical-align: top;
-  }
-  th { color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 12px; }
-  footer {
-    padding: 36px 0 56px;
-    color: var(--muted);
-    font-size: 13px;
-    text-align: center;
-  }
-  .pill {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 999px;
-    background: rgba(106,166,255,0.12);
-    color: var(--accent);
-    font-size: 12px;
-    margin-right: 6px;
-  }
-  .authors {
-    text-align: center;
-  }
+  pre code { background: none; padding: 0; }
+
+  .authors { text-align: center; }
   .authors .author-list {
     font-size: 18px;
     line-height: 1.7;
@@ -242,13 +296,17 @@
     color: var(--muted);
     font-size: 14px;
     line-height: 1.65;
-    max-width: 760px;
+    max-width: 780px;
     margin: 0 auto;
   }
   .authors .affiliations p { margin: 4px 0; }
-  .authors .corresponding {
-    margin-top: 10px;
-    font-size: 14px;
+  .authors .corresponding { margin-top: 10px; font-size: 14px; }
+
+  footer {
+    padding: 36px 0 56px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
   }
 </style>
 </head>
@@ -256,23 +314,25 @@
 
 <header class="hero">
   <div class="wrap">
-    <span class="eyebrow">WiFi Sensing &middot; OpenWrt &middot; Deep Learning</span>
+    <span class="eyebrow">IEEE 802.11ac &middot; Quasi-Monostatic Wi-Fi Sensing</span>
     <h1>BFM Sensing</h1>
     <p class="lede">
-      Device-free human activity recognition using compressed beamforming reports
-      captured from a commodity 802.11ac router. No cameras, no wearables &mdash;
-      just the WiFi the room already has.
+      A firmware-agnostic framework for human locomotion detection via
+      quasi-monostatic beamforming feedback dynamics. One commodity 802.11ac
+      access point. No driver hacking. No PHY-layer patches. No bistatic rig.
     </p>
     <div class="cta">
       <a class="btn primary" href="https://github.com/purple-ginseng/wifi-har">View on GitHub</a>
-      <a class="btn" href="#quickstart">Quick start</a>
+      <a class="btn" href="#abstract">Read the work</a>
       <a class="btn" href="#pipeline">How it works</a>
+      <a class="btn" href="#results">Results</a>
     </div>
     <div style="margin-top:28px">
-      <span class="pill">Standing</span>
-      <span class="pill">Walking</span>
-      <span class="pill">100 Hz capture</span>
-      <span class="pill">~5 packet windows</span>
+      <span class="pill">98.30% intra-environment</span>
+      <span class="pill">94.94% mean cross-environment</span>
+      <span class="pill">150 sessions</span>
+      <span class="pill">5 subjects, 3 environments</span>
+      <span class="pill">LOSO protocol</span>
     </div>
   </div>
 </header>
@@ -299,31 +359,76 @@
   </div>
 </section>
 
-<section id="overview">
+<section id="abstract">
   <div class="wrap">
-    <h2>What it does</h2>
+    <h2>Context</h2>
     <p class="section-lede">
-      A trained CNN listens to compressed beamforming (BFM) angles emitted by WiFi
-      clients during normal channel sounding, decodes them into per-subcarrier
-      complex channel ratios, and classifies the human activity in the room in
-      real time.
+      Wi-Fi-based human locomotion detection has a deployment problem, not an
+      accuracy problem. The cause is hardware.
     </p>
+    <p>
+      Most Wi-Fi sensing systems depend on Channel State Information (CSI),
+      which demands vendor-specific drivers, firmware patches, or a multi-device
+      bistatic setup. Although the Beamforming Feedback Matrix (BFM) is exposed
+      by the IEEE&nbsp;802.11ac standard itself, existing BFM work still assumes
+      physically separated transmitters and receivers, which blocks residential
+      and edge-side deployment.
+    </p>
+    <p>
+      We present a firmware-agnostic HLD framework that runs on a single
+      commercial access point. It requires no driver modification and no
+      PHY-layer patching. The framework extracts BFM signals directly from
+      standard IEEE&nbsp;802.11ac feedback frames using stock administrative
+      utilities, removing the driver access that CSI sensing demands. A
+      lightweight feature engineering pipeline isolates locomotion-induced
+      perturbations from static environmental noise, handling the
+      non-stationarity, high dimensionality, and quantization artifacts
+      inherent to compressed beamforming.
+    </p>
+    <p>
+      Across 150 sessions from 5 subjects in 3 propagation environments, under
+      a Leave-One-Subject-Out (LOSO) protocol, the model reaches 98.30%
+      intra-environment accuracy on unseen subjects and 94.94% mean
+      cross-environment accuracy &mdash; without firmware patching or CSI
+      extraction.
+    </p>
+
+    <figure style="margin-top:28px">
+      <img src="figures/fig01_overview.png" alt="Overall architecture" loading="lazy">
+      <figcaption>
+        <strong>Overall architecture.</strong> (a) Compressed IEEE&nbsp;802.11ac
+        VHT beamforming feedback is acquired from a router-monitor pair in a
+        controlled indoor setting. (b) A seven-stage feature engineering
+        pipeline transforms raw BFM angles through decompression, ratio
+        computation, SNR filtering, PCA-based subcarrier aggregation
+        (n=1), Winsorization, robust moving standardization, and acceleration
+        extraction. (c) Feature discriminability between standing and walking
+        is validated via the Mann-Whitney U test. (d) A logistic regression
+        classifier performs binary locomotion detection.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="contributions">
+  <div class="wrap">
+    <h2>Contributions</h2>
     <div class="grid">
       <div class="card">
-        <h3>Commodity hardware</h3>
-        <p>Runs on a stock D-Link DIR-842 C2 with OpenWrt 24.10 and a 5 GHz monitor interface.</p>
+        <h3>Quasi-monostatic BFM sensing</h3>
+        <p>A single commercial AP carries the entire sensing function. No extra hardware. No firmware patch. No driver access.</p>
       </div>
       <div class="card">
-        <h3>Self-contained sensing</h3>
-        <p>Self-ping at 100 Hz turns the router into both transmitter and receiver &mdash; radar-like sensing without external clients.</p>
+        <h3>Robust feature engineering</h3>
+        <p>Magnitude-based packet filtering plus a third-order Log-Mean Absolute Difference (LMAD) transform produce a linearly separable, noise-resilient feature suitable for edge inference.</p>
       </div>
       <div class="card">
-        <h3>Live inference</h3>
-        <p>Streamlit page pulls pcaps over SFTP, decompresses, and predicts every second.</p>
+        <h3>Cross-environment validation</h3>
+        <p>94.94% mean cross-environment accuracy across 150 sessions, 5 subjects, and 3 propagation environments under a strict Leave-One-Subject-Out protocol.</p>
       </div>
       <div class="card">
-        <h3>Doppler features</h3>
-        <p>Phase-velocity features expose subtle motion that magnitude alone misses.</p>
+        <h3>Edge-ready by design</h3>
+        <p>A logistic regression classifier is sufficient. Reliable HLD on compressed BFM does not require deep learning, which lets us attribute the result to the signal rather than to model capacity.</p>
       </div>
     </div>
   </div>
@@ -331,44 +436,148 @@
 
 <section id="pipeline">
   <div class="wrap">
-    <h2>Pipeline</h2>
+    <h2>Acquisition and pipeline</h2>
     <p class="section-lede">
-      From an over-the-air WiFi action frame to a labeled activity in five stages.
-      The same path is shared by both the labeled-collection GUI and the live
-      Streamlit page.
+      A single commodity 802.11ac AP captures protocol-compliant beamforming
+      feedback during controlled human locomotion. Packet captures are decoded
+      to per-subcarrier complex frequency responses, from which magnitude and
+      phase features are derived for temporal analysis and inference.
     </p>
     <figure>
-      <img src="../plots/fig_pipeline_overview.png" alt="End-to-end pipeline diagram">
-      <figcaption>End-to-end pipeline: capture &rarr; parse &rarr; decompress &rarr; feature extraction &rarr; CNN.</figcaption>
+      <img src="figures/fig02_acquisition.png" alt="Data acquisition and BFM extraction pipeline" loading="lazy">
+      <figcaption>
+        Data acquisition and BFM extraction pipeline. The AP logs each returned
+        report on its wireless interface, drops the PCAP to local storage, and
+        hands the file off for offline processing.
+      </figcaption>
     </figure>
-    <table style="margin-top:24px">
-      <thead><tr><th>Stage</th><th>Tool</th><th>Output</th></tr></thead>
-      <tbody>
-        <tr><td>RF capture</td><td><code>tcpdump -i mon0 'wlan[24] == 21'</code></td><td><code>*.pcap</code></td></tr>
-        <tr><td>Frame parsing</td><td><code>tshark</code> via <code>bfmtool/extractor.py</code></td><td>angles CSV</td></tr>
-        <tr><td>Decompression</td><td>Givens rotation, <code>bfmtool/preprocessor.py</code></td><td>complex per-subcarrier ratio</td></tr>
-        <tr><td>Feature extraction</td><td>magnitude / phase / Doppler</td><td>tensor for the model</td></tr>
-        <tr><td>Classification</td><td>Keras CNN</td><td>activity + probability</td></tr>
-      </tbody>
-    </table>
+
+    <h3>Seven processing stages</h3>
+    <ol class="pipeline">
+      <li>
+        <strong>BFM Reconstruction</strong>
+        <p>The AP emits Compressed Beamforming Feedback (CBF). We invert the Givens rotations to rebuild the 2&times;1 BFM for each of the 234 subcarriers from the angles &phi;<sub>11</sub> and &psi;<sub>21</sub>.</p>
+      </li>
+      <li>
+        <strong>BFM-Ratio Derivation</strong>
+        <p>Dividing one antenna's coefficient by the other's cancels the time-varying singular value and the common phase, leaving one complex value per subcarrier that retains the relative amplitude and phase.</p>
+      </li>
+      <li>
+        <strong>Magnitude-based Filtering</strong>
+        <p>Packets with mean BFM-ratio magnitude below 5 are dropped. Below this threshold, phase reconstruction injects spurious spikes; the threshold is data-driven from a bimodal magnitude distribution with a stable valley near 5.</p>
+      </li>
+      <li>
+        <strong>PCA Subcarrier Aggregation</strong>
+        <p>PCA is applied across 234 subcarriers separately to magnitude and phase. Only the first principal component is retained, producing scalar features PCA<sub>mag</sub> and PCA<sub>phase</sub> per time step. Per-modality PCA preserves the dominant energy modes of both signals.</p>
+      </li>
+      <li>
+        <strong>Temporal Feature Engineering</strong>
+        <p>Winsorization (100-sample window, Tukey's rule) clips outliers in place. Robust moving standardization subtracts the moving median and divides by the median absolute deviation to remove non-stationary baseline drift. The final Log-Mean Absolute Difference (LMAD) transform captures step-to-step roughness in a single scalar per modality.</p>
+      </li>
+      <li>
+        <strong>Statistical Feature Selection</strong>
+        <p>The differencing order n is selected by a maximin criterion on a robust separation margin under LOSO cross-validation across the three environments. n = 3 wins the worst-case margin (2.3489) and worst-case AUC (0.9714).</p>
+      </li>
+      <li>
+        <strong>Lightweight Classification</strong>
+        <p>Logistic Regression with L2 regularization (C = 1.0, lbfgs) maps the 2-D LMAD feature to a binary decision. Higher-capacity models (SVM, MLP) produced no consistent gains; LR is the capacity-matched choice for edge inference.</p>
+      </li>
+    </ol>
+
+    <div class="figure-row" style="margin-top:24px">
+      <figure>
+        <img src="figures/fig03_mag_filter.png" alt="Effect of magnitude filtering on phase integrity" loading="lazy">
+        <figcaption><strong>Magnitude filtering, phase integrity.</strong> (a) Raw circular mean phase, corrupted by low-magnitude packets. (b) After the magnitude filter, the underlying signal is clean.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/fig04_mag_analysis.png" alt="BFM ratio magnitude analysis" loading="lazy">
+        <figcaption><strong>Magnitude analysis.</strong> (a) Per-subcarrier magnitudes for one session. (b) Bimodal global distribution with a stable valley at magnitude 5.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/fig05_feature_pipeline.png" alt="Visual justification for the temporal feature pipeline" loading="lazy">
+        <figcaption><strong>Temporal feature engineering.</strong> Raw PCA<sub>mag</sub>/PCA<sub>phase</sub> versus their LMAD with n = 2 differencing &mdash; the transformed space becomes linearly separable.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/fig07_worst_case_margin.png" alt="Worst-case separation margin vs differencing order" loading="lazy">
+        <figcaption><strong>Order selection.</strong> Worst-case separation margin peaks at n = 3 (margin 2.3489, AUC 0.9714).</figcaption>
+      </figure>
+    </div>
+
+    <figure style="margin-top:18px">
+      <img src="figures/fig06_flow.png" alt="End-to-end feature engineering flow" loading="lazy">
+      <figcaption>
+        <strong>End-to-end feature engineering for two representative sessions
+        (no-foil environment).</strong> Each column is one processing stage
+        applied to 234 OFDM subcarriers. Top row: magnitude path. Bottom row:
+        phase path. Blue: standing. Red: walking.
+      </figcaption>
+    </figure>
   </div>
 </section>
 
-<section id="signal">
+<section id="experiment">
   <div class="wrap">
-    <h2>Signal in flight</h2>
+    <h2>Experiment setup</h2>
     <p class="section-lede">
-      The same packet window after each preprocessing stage. Magnitude on the left,
-      phase on the right.
+      150 recording sessions across 5 subjects, 3 propagation environments, and
+      2 activities (walking, standing).
     </p>
-    <div class="figure-row">
-      <figure><img src="../plots/step2mag.png" alt="Step 2 magnitude"><figcaption>Per-subcarrier magnitude</figcaption></figure>
-      <figure><img src="../plots/step2phase.png" alt="Step 2 phase"><figcaption>Per-subcarrier phase</figcaption></figure>
-      <figure><img src="../plots/step5mag.png" alt="Step 5 magnitude"><figcaption>After Hampel filtering (mag)</figcaption></figure>
-      <figure><img src="../plots/step5phase.png" alt="Step 5 phase"><figcaption>After unwrap + detrend (phase)</figcaption></figure>
-      <figure><img src="../plots/step8mag.png" alt="Final magnitude"><figcaption>Final magnitude representation</figcaption></figure>
-      <figure><img src="../plots/step8phase.png" alt="Final phase"><figcaption>Final phase representation</figcaption></figure>
+
+    <div class="grid" style="margin-bottom:28px">
+      <div class="stat"><div class="num">150</div><div class="label">SESSIONS</div></div>
+      <div class="stat"><div class="num">5</div><div class="label">SUBJECTS</div></div>
+      <div class="stat"><div class="num">3</div><div class="label">ENVIRONMENTS</div></div>
+      <div class="stat"><div class="num">10.6 Hz</div><div class="label">SAMPLING RATE</div></div>
+      <div class="stat"><div class="num">234</div><div class="label">OFDM SUBCARRIERS</div></div>
+      <div class="stat"><div class="num">~90 s</div><div class="label">PER SESSION</div></div>
     </div>
+
+    <h3>Hardware</h3>
+    <ul>
+      <li><strong>Access point:</strong> D-Link DIR-842 (IEEE&nbsp;802.11ac), stock firmware replaced with OpenWrt for edge-level <code>tcpdump</code> capture.</li>
+      <li><strong>Client:</strong> POCO M4 Pro smartphone running <code>iperf3 -R</code> to drive downstream traffic and trigger BFM frames.</li>
+      <li><strong>Reflection enclosure:</strong> 11.7 &times; 5.3 &times; 21&nbsp;cm aluminum-foil-lined box housing the client to suppress local stray reflections.</li>
+      <li><strong>Acquisition system:</strong> custom Python interface synchronizing remote <code>tcpdump</code>, automatic PCAP transfer, session labeling, and BFM extraction.</li>
+    </ul>
+
+    <h3>Environments</h3>
+    <p>The three settings form a multipath gradient that stresses the BFM features across varying multipath severity and spatial selectivity.</p>
+    <ul>
+      <li><strong>Open</strong> &mdash; baseline; minimal local multipath.</li>
+      <li><strong>No-Foil</strong> &mdash; wooden dividers enclose the area; moderate multipath without metallic cladding.</li>
+      <li><strong>Foil</strong> &mdash; same dividers with aluminum foil interior; specular multipath, standing-wave interference. Adversarial on purpose.</li>
+    </ul>
+
+    <div class="figure-row">
+      <figure>
+        <img src="figures/fig09_environments.png" alt="Three propagation environments" loading="lazy">
+        <figcaption><strong>Three environments.</strong> Left: no-foil. Center: foil. Right: open.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/fig08_floorplan.png" alt="Side and floor plan" loading="lazy">
+        <figcaption><strong>Layout.</strong> Side plan (left) and floor plan (right) of the experiment area.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/fig08_ripple.png" alt="Standing-wave conceptual visualization" loading="lazy">
+        <figcaption><strong>Why foil is adversarial.</strong> Falstad ripple-tank simulation showing the standing-wave interference produced inside the foiled enclosure.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/fig10_walking_standing.png" alt="Walking and standing within marked positions" loading="lazy">
+        <figcaption><strong>Activity protocol.</strong> Standing within a 43.6 &times; 58.45&nbsp;cm region; walking along a 266.1&nbsp;cm linear path. Each session = 90&nbsp;seconds, single activity.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/fig11_acquisition_system.jpg" alt="Data acquisition system" loading="lazy">
+        <figcaption><strong>Data acquisition system.</strong> Custom Python interface for remote tcpdump, automatic PCAP transfer, and session labeling with activity and environment metadata.</figcaption>
+      </figure>
+    </div>
+
+    <h3>Validation</h3>
+    <ul>
+      <li><strong>Subject-independence:</strong> Leave-One-Subject-Out cross-validation. 3 training subjects, 2 strictly held-out test subjects.</li>
+      <li><strong>Environment-independence:</strong> intra-environment + cross-environment evaluation across all 9 train/test environment pairs.</li>
+      <li><strong>Non-overlapping windows:</strong> exactly one feature vector per observation window enters the pool, eliminating the temporal autocorrelation that rolling-window extraction normally injects.</li>
+      <li><strong>Metrics:</strong> classification accuracy, weighted F1-score, confusion matrices.</li>
+    </ul>
   </div>
 </section>
 
@@ -376,86 +585,153 @@
   <div class="wrap">
     <h2>Results</h2>
     <p class="section-lede">
-      Per-environment CNN trained on labeled BFM windows, evaluated against held-out
-      walks/standing sessions. Doppler-feature variant is the most robust to
-      environment shifts.
+      Final configuration: fused magnitude-phase features with n = 3 LMAD and a
+      4.0&nbsp;s observation window (W = 42), evaluated on a strictly held-out
+      cohort (Subjects D and E).
     </p>
-    <div class="figure-row">
-      <figure><img src="../bfm_all_environments_history.png" alt="Training history"><figcaption>Training accuracy / loss across environments</figcaption></figure>
-      <figure><img src="../bfm_all_environments_confusion.png" alt="Confusion matrix"><figcaption>Confusion matrix across environments</figcaption></figure>
-      <figure><img src="../bfm_environment_accuracy_comparison.png" alt="Accuracy comparison"><figcaption>Accuracy by environment (open / nofoil / foil)</figcaption></figure>
-      <figure><img src="../bfm_doppler_confusion_matrices.png" alt="Doppler confusion matrices"><figcaption>Doppler model: per-environment confusion matrices</figcaption></figure>
-      <figure><img src="../pca_explained_variance.png" alt="PCA explained variance"><figcaption>PCA explained variance over BFM features</figcaption></figure>
-      <figure><img src="../circular_mean_phase_comparison.png" alt="Circular mean phase comparison"><figcaption>Phase representation sanity check</figcaption></figure>
-    </div>
+
+    <h3>Modality fusion</h3>
+    <table>
+      <thead>
+        <tr><th>Input modality</th><th class="num">Intra-Env Acc.</th><th class="num">Cross-Env Acc.</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Phase only</td><td class="num">93.85%</td><td class="num">93.65%</td></tr>
+        <tr><td>Magnitude only</td><td class="num">94.06%</td><td class="num">94.06%</td></tr>
+        <tr class="highlight"><td>Fused (both)</td><td class="num">96.67%</td><td class="num">95.05%</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--muted); margin-top:8px; font-size:14px">
+      Magnitude tracks slow spatial attenuation; phase tracks temporal
+      perturbation. Neither covers the full response, so fusion lifts accuracy
+      in both regimes &mdash; with the larger absolute gain under cross-environment
+      evaluation.
+    </p>
+
+    <h3>Latency vs. accuracy</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Window W</th><th class="num">Latency</th>
+          <th class="num">Intra-Env</th><th class="num">Mean Cross-Env</th>
+          <th class="num">Worst (Open&rarr;Foil)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>11 samples</td><td class="num">1.0&nbsp;s</td><td class="num">90.96%</td><td class="num">90.45%</td><td class="num">84.37%</td></tr>
+        <tr><td>21 samples</td><td class="num">2.0&nbsp;s</td><td class="num">93.89%</td><td class="num">93.70%</td><td class="num">90.13%</td></tr>
+        <tr class="highlight"><td>42 samples</td><td class="num">4.0&nbsp;s</td><td class="num">96.11%</td><td class="num">94.94%</td><td class="num">91.24%</td></tr>
+        <tr><td>53 samples</td><td class="num">5.0&nbsp;s</td><td class="num">96.67%</td><td class="num">95.05%</td><td class="num">90.94%</td></tr>
+        <tr><td>64 samples</td><td class="num">6.0&nbsp;s</td><td class="num">97.44%</td><td class="num">95.06%</td><td class="num">90.38%</td></tr>
+        <tr><td>84 samples</td><td class="num">8.0&nbsp;s</td><td class="num">98.15%</td><td class="num">95.28%</td><td class="num">88.89%</td></tr>
+        <tr><td>106 samples</td><td class="num">10.0&nbsp;s</td><td class="num">98.33%</td><td class="num">94.88%</td><td class="num">88.57%</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--muted); margin-top:8px; font-size:14px">
+      Worst-case cross-environment accuracy peaks at W = 42. Longer windows
+      capture more environment-specific multipath and transfer worse, so 4.0&nbsp;s
+      is the operating point for deployment under domain shift.
+    </p>
+
+    <h3>Intra-environment performance</h3>
+    <table>
+      <thead><tr><th>Environment</th><th class="num">Accuracy</th><th class="num">F1-Score</th></tr></thead>
+      <tbody>
+        <tr><td>Nofoil</td><td class="num">98.06%</td><td class="num">0.9806</td></tr>
+        <tr><td>Foil</td><td class="num">91.97%</td><td class="num">0.9197</td></tr>
+        <tr class="highlight"><td>Open</td><td class="num">98.30%</td><td class="num">0.9830</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Cross-environment transfer</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Trained on</th>
+          <th class="num">&rarr; Nofoil</th>
+          <th class="num">&rarr; Foil</th>
+          <th class="num">&rarr; Open</th>
+          <th class="num">Mean</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Nofoil</td><td class="num">&mdash;</td><td class="num">88.81%</td><td class="num">100.00%</td><td class="num">94.41%</td></tr>
+        <tr class="highlight"><td>Foil</td><td class="num">96.60%</td><td class="num">&mdash;</td><td class="num">100.00%</td><td class="num">98.30%</td></tr>
+        <tr><td>Open</td><td class="num">92.96%</td><td class="num">91.24%</td><td class="num">&mdash;</td><td class="num">92.10%</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--muted); margin-top:8px; font-size:14px">
+      Models trained under heavier multipath (Foil) transfer reliably to lower
+      multipath; models trained on cleaner conditions (Open) degrade when
+      deployed into denser multipath. This supports a
+      <em>train-under-stress</em> deployment strategy.
+    </p>
+
+    <figure style="margin-top:24px">
+      <img src="figures/fig12_confusion_open.png" alt="Confusion matrix for Open environment test set" loading="lazy">
+      <figcaption><strong>Confusion matrix &mdash; Open environment, held-out test set.</strong></figcaption>
+    </figure>
   </div>
 </section>
 
-<section id="quickstart">
+<section id="workflow">
   <div class="wrap">
-    <h2>Quick start</h2>
+    <h2>Reproducing the workflow</h2>
     <p class="section-lede">
-      Plug an Ethernet cable from your laptop into the router. Then:
+      The same pipeline is shared between labeled data collection and live
+      inference. The reference implementation lives in
+      <a href="https://github.com/purple-ginseng/WiFi-Signal-Processing-HAR-POC">WiFi-Signal-Processing-HAR-POC</a>.
     </p>
-    <ol class="steps">
+
+    <ol class="pipeline">
       <li>
-        <strong>Prep the router (one-time)</strong>
-        Install <code>libpcap1</code>, <code>tcpdump-mini</code>, and <code>openssh-sftp-server</code>
-        from the OpenWrt feed matching your architecture. Without
-        <code>tcpdump-mini</code>, capture cannot start; without
-        <code>openssh-sftp-server</code>, dropbear has no SFTP subsystem and
-        paramiko's downloads fail with <em>EOF during negotiation</em>.
+        <strong>Prep the OpenWrt router (one-time)</strong>
+        <p>Install <code>libpcap1</code>, <code>tcpdump-mini</code>, and <code>openssh-sftp-server</code> from the OpenWrt feed matching your architecture. Without these, capture cannot start and paramiko's downloads fail.</p>
       </li>
       <li>
-        <strong>Install Python deps</strong>
-        <pre><code>pip install -r requirements.txt paramiko streamlit tensorflow</code></pre>
+        <strong>Bring up monitor mode on phy0</strong>
+        <p><code>iw phy phy0 interface add mon0 type monitor; ip link set mon0 up</code></p>
       </li>
       <li>
-        <strong>Launch the live page</strong>
-        <pre><code>streamlit run pages/live_activity_detection.py</code></pre>
-        Then open <a href="http://localhost:8501">http://localhost:8501</a>.
+        <strong>Drive downstream traffic to the client</strong>
+        <p>Run <code>iperf3 -s</code> on the AP and <code>iperf3 -c &lt;ap_ip&gt; -R</code> on the client &mdash; or use the self-ping mode (router pings its own IP at 100&nbsp;Hz) for radar-like single-AP sensing.</p>
       </li>
       <li>
-        <strong>Verify and start</strong>
-        Expand <em>Router Diagnostics &amp; Setup</em> &rarr; <em>Test Connection
-        via BFMCollector</em>. When the green check appears, hit
-        <em>Start Live Detection</em>.
+        <strong>Capture BFM frames</strong>
+        <p><code>tcpdump -i mon0 -p -w /tmp/bfm_capture -W 10 -C 1 'wlan[24] == 21'</code></p>
       </li>
       <li>
-        <strong>Walk around</strong>
-        Within a few seconds the status flips green, packets accumulate, and
-        predictions (Standing / Walking) appear with class probabilities and
-        live Doppler velocity plots.
+        <strong>Pull, decode, decompress</strong>
+        <p>The Python collector pulls rotated PCAPs over SFTP. <code>tshark</code> extracts BFM angles per packet; the decompressor inverts the Givens rotations to get the per-subcarrier complex ratio.</p>
+      </li>
+      <li>
+        <strong>Feature engineering and classification</strong>
+        <p>Magnitude-filter, PCA per modality, winsorize + robust standardize, third-order LMAD over a 4.0&nbsp;s window, then logistic regression.</p>
       </li>
     </ol>
-  </div>
-</section>
 
-<section id="modes">
-  <div class="wrap">
-    <h2>Sensing modes</h2>
-    <p class="section-lede">
-      The same pipeline supports two sensing geometries, toggled by the
-      <code>ENABLE_TRAFFIC_GENERATION</code> flag in
-      <code>pages/live_activity_detection.py</code>.
-    </p>
-    <div class="grid">
-      <div class="card">
-        <h3>Self-ping (radar-like)</h3>
-        <p>The router pings its own IP at 100 Hz and runs <code>iperf3 -s</code>. The same device acts as transmitter and receiver, no external client required.</p>
-      </div>
-      <div class="card">
-        <h3>Passive bistatic</h3>
-        <p>Disable traffic generation and rely on a phone or laptop already associated with the AP. Captures BFM frames generated by the natural traffic from those clients.</p>
-      </div>
-    </div>
+    <h3>Quick start</h3>
+    <pre><code># Workstation
+git clone https://github.com/purple-ginseng/WiFi-Signal-Processing-HAR-POC
+cd WiFi-Signal-Processing-HAR-POC
+pip install -r requirements.txt paramiko streamlit tensorflow
+
+# Router (one-time, see README for package URLs)
+ssh root@192.168.1.1 'opkg install /tmp/libpcap1_*.ipk \
+                                     /tmp/tcpdump-mini_*.ipk \
+                                     /tmp/openssh-sftp-server_*.ipk'
+
+# Live page
+streamlit run pages/live_activity_detection.py
+# then open http://localhost:8501</code></pre>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
     Source &middot; <a href="https://github.com/purple-ginseng/wifi-har">github.com/purple-ginseng/wifi-har</a><br>
-    Built on OpenWrt 24.10, paramiko, tshark, TensorFlow / Keras.
+    Reference implementation &middot; <a href="https://github.com/purple-ginseng/WiFi-Signal-Processing-HAR-POC">WiFi-Signal-Processing-HAR-POC</a><br>
+    Built on OpenWrt 24.10, paramiko, tshark, scikit-learn.
   </div>
 </footer>
 
