@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BFM Sensing &mdash; WiFi-based Activity Recognition</title>
+<meta name="description" content="Device-free human activity recognition from IEEE 802.11 compressed beamforming reports captured on a commodity OpenWrt router.">
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-soft: #131a2e;
+    --fg: #e7ecf3;
+    --muted: #8b95ad;
+    --accent: #6aa6ff;
+    --accent-2: #9d7bff;
+    --rule: #243054;
+    --code-bg: #0e1426;
+    --max: 1080px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(1200px 600px at 80% -10%, rgba(157,123,255,0.18), transparent 60%),
+                radial-gradient(900px 500px at -10% 10%, rgba(106,166,255,0.15), transparent 60%),
+                var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+  header.hero {
+    padding: 96px 0 56px;
+    text-align: center;
+    border-bottom: 1px solid var(--rule);
+  }
+  .eyebrow {
+    display: inline-block;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: clamp(34px, 5vw, 56px);
+    margin: 0 0 16px;
+    line-height: 1.1;
+    background: linear-gradient(90deg, #fff 30%, var(--accent) 70%, var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 700px;
+    margin: 0 auto 28px;
+  }
+  .cta {
+    display: inline-flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn {
+    display: inline-block;
+    padding: 12px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--rule);
+    background: var(--bg-soft);
+    color: var(--fg);
+    font-weight: 600;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-1px); border-color: var(--accent); }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+    color: #0b1020;
+  }
+  section { padding: 56px 0; border-bottom: 1px solid var(--rule); }
+  section h2 {
+    font-size: 28px;
+    margin: 0 0 12px;
+  }
+  section p.section-lede {
+    color: var(--muted);
+    margin: 0 0 28px;
+    max-width: 720px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .card h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  figure {
+    margin: 0;
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  figure img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    background: #fff;
+  }
+  figcaption {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 10px;
+    text-align: center;
+  }
+  .figure-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  ol.steps {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+  }
+  ol.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding: 16px 18px 16px 60px;
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b1020;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  ol.steps strong { display: block; margin-bottom: 4px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th, td {
+    border-bottom: 1px solid var(--rule);
+    padding: 10px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 12px; }
+  footer {
+    padding: 36px 0 56px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(106,166,255,0.12);
+    color: var(--accent);
+    font-size: 12px;
+    margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">WiFi Sensing &middot; OpenWrt &middot; Deep Learning</span>
+    <h1>BFM Sensing</h1>
+    <p class="lede">
+      Device-free human activity recognition using compressed beamforming reports
+      captured from a commodity 802.11ac router. No cameras, no wearables &mdash;
+      just the WiFi the room already has.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/purple-ginseng/wifi-har">View on GitHub</a>
+      <a class="btn" href="#quickstart">Quick start</a>
+      <a class="btn" href="#pipeline">How it works</a>
+    </div>
+    <div style="margin-top:28px">
+      <span class="pill">Standing</span>
+      <span class="pill">Walking</span>
+      <span class="pill">100 Hz capture</span>
+      <span class="pill">~5 packet windows</span>
+    </div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="section-lede">
+      A trained CNN listens to compressed beamforming (BFM) angles emitted by WiFi
+      clients during normal channel sounding, decodes them into per-subcarrier
+      complex channel ratios, and classifies the human activity in the room in
+      real time.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <h3>Commodity hardware</h3>
+        <p>Runs on a stock D-Link DIR-842 C2 with OpenWrt 24.10 and a 5 GHz monitor interface.</p>
+      </div>
+      <div class="card">
+        <h3>Self-contained sensing</h3>
+        <p>Self-ping at 100 Hz turns the router into both transmitter and receiver &mdash; radar-like sensing without external clients.</p>
+      </div>
+      <div class="card">
+        <h3>Live inference</h3>
+        <p>Streamlit page pulls pcaps over SFTP, decompresses, and predicts every second.</p>
+      </div>
+      <div class="card">
+        <h3>Doppler features</h3>
+        <p>Phase-velocity features expose subtle motion that magnitude alone misses.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pipeline">
+  <div class="wrap">
+    <h2>Pipeline</h2>
+    <p class="section-lede">
+      From an over-the-air WiFi action frame to a labeled activity in five stages.
+      The same path is shared by both the labeled-collection GUI and the live
+      Streamlit page.
+    </p>
+    <figure>
+      <img src="../plots/fig_pipeline_overview.png" alt="End-to-end pipeline diagram">
+      <figcaption>End-to-end pipeline: capture &rarr; parse &rarr; decompress &rarr; feature extraction &rarr; CNN.</figcaption>
+    </figure>
+    <table style="margin-top:24px">
+      <thead><tr><th>Stage</th><th>Tool</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td>RF capture</td><td><code>tcpdump -i mon0 'wlan[24] == 21'</code></td><td><code>*.pcap</code></td></tr>
+        <tr><td>Frame parsing</td><td><code>tshark</code> via <code>bfmtool/extractor.py</code></td><td>angles CSV</td></tr>
+        <tr><td>Decompression</td><td>Givens rotation, <code>bfmtool/preprocessor.py</code></td><td>complex per-subcarrier ratio</td></tr>
+        <tr><td>Feature extraction</td><td>magnitude / phase / Doppler</td><td>tensor for the model</td></tr>
+        <tr><td>Classification</td><td>Keras CNN</td><td>activity + probability</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="signal">
+  <div class="wrap">
+    <h2>Signal in flight</h2>
+    <p class="section-lede">
+      The same packet window after each preprocessing stage. Magnitude on the left,
+      phase on the right.
+    </p>
+    <div class="figure-row">
+      <figure><img src="../plots/step2mag.png" alt="Step 2 magnitude"><figcaption>Per-subcarrier magnitude</figcaption></figure>
+      <figure><img src="../plots/step2phase.png" alt="Step 2 phase"><figcaption>Per-subcarrier phase</figcaption></figure>
+      <figure><img src="../plots/step5mag.png" alt="Step 5 magnitude"><figcaption>After Hampel filtering (mag)</figcaption></figure>
+      <figure><img src="../plots/step5phase.png" alt="Step 5 phase"><figcaption>After unwrap + detrend (phase)</figcaption></figure>
+      <figure><img src="../plots/step8mag.png" alt="Final magnitude"><figcaption>Final magnitude representation</figcaption></figure>
+      <figure><img src="../plots/step8phase.png" alt="Final phase"><figcaption>Final phase representation</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="results">
+  <div class="wrap">
+    <h2>Results</h2>
+    <p class="section-lede">
+      Per-environment CNN trained on labeled BFM windows, evaluated against held-out
+      walks/standing sessions. Doppler-feature variant is the most robust to
+      environment shifts.
+    </p>
+    <div class="figure-row">
+      <figure><img src="../bfm_all_environments_history.png" alt="Training history"><figcaption>Training accuracy / loss across environments</figcaption></figure>
+      <figure><img src="../bfm_all_environments_confusion.png" alt="Confusion matrix"><figcaption>Confusion matrix across environments</figcaption></figure>
+      <figure><img src="../bfm_environment_accuracy_comparison.png" alt="Accuracy comparison"><figcaption>Accuracy by environment (open / nofoil / foil)</figcaption></figure>
+      <figure><img src="../bfm_doppler_confusion_matrices.png" alt="Doppler confusion matrices"><figcaption>Doppler model: per-environment confusion matrices</figcaption></figure>
+      <figure><img src="../pca_explained_variance.png" alt="PCA explained variance"><figcaption>PCA explained variance over BFM features</figcaption></figure>
+      <figure><img src="../circular_mean_phase_comparison.png" alt="Circular mean phase comparison"><figcaption>Phase representation sanity check</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="quickstart">
+  <div class="wrap">
+    <h2>Quick start</h2>
+    <p class="section-lede">
+      Plug an Ethernet cable from your laptop into the router. Then:
+    </p>
+    <ol class="steps">
+      <li>
+        <strong>Prep the router (one-time)</strong>
+        Install <code>libpcap1</code>, <code>tcpdump-mini</code>, and <code>openssh-sftp-server</code>
+        from the OpenWrt feed matching your architecture. Without
+        <code>tcpdump-mini</code>, capture cannot start; without
+        <code>openssh-sftp-server</code>, dropbear has no SFTP subsystem and
+        paramiko's downloads fail with <em>EOF during negotiation</em>.
+      </li>
+      <li>
+        <strong>Install Python deps</strong>
+        <pre><code>pip install -r requirements.txt paramiko streamlit tensorflow</code></pre>
+      </li>
+      <li>
+        <strong>Launch the live page</strong>
+        <pre><code>streamlit run pages/live_activity_detection.py</code></pre>
+        Then open <a href="http://localhost:8501">http://localhost:8501</a>.
+      </li>
+      <li>
+        <strong>Verify and start</strong>
+        Expand <em>Router Diagnostics &amp; Setup</em> &rarr; <em>Test Connection
+        via BFMCollector</em>. When the green check appears, hit
+        <em>Start Live Detection</em>.
+      </li>
+      <li>
+        <strong>Walk around</strong>
+        Within a few seconds the status flips green, packets accumulate, and
+        predictions (Standing / Walking) appear with class probabilities and
+        live Doppler velocity plots.
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="modes">
+  <div class="wrap">
+    <h2>Sensing modes</h2>
+    <p class="section-lede">
+      The same pipeline supports two sensing geometries, toggled by the
+      <code>ENABLE_TRAFFIC_GENERATION</code> flag in
+      <code>pages/live_activity_detection.py</code>.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <h3>Self-ping (radar-like)</h3>
+        <p>The router pings its own IP at 100 Hz and runs <code>iperf3 -s</code>. The same device acts as transmitter and receiver, no external client required.</p>
+      </div>
+      <div class="card">
+        <h3>Passive bistatic</h3>
+        <p>Disable traffic generation and rely on a phone or laptop already associated with the AP. Captures BFM frames generated by the natural traffic from those clients.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Source &middot; <a href="https://github.com/purple-ginseng/wifi-har">github.com/purple-ginseng/wifi-har</a><br>
+    Built on OpenWrt 24.10, paramiko, tshark, TensorFlow / Keras.
+  </div>
+</footer>
+
+</body>
+</html>
