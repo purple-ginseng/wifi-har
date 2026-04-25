@@ -198,6 +198,28 @@
     font-size: 12px;
     margin-right: 6px;
   }
+  .authors {
+    text-align: center;
+  }
+  .authors .author-list {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--fg);
+    margin: 0 0 14px;
+  }
+  .authors sup { color: var(--accent); font-weight: 600; padding: 0 2px; }
+  .authors .affiliations {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .authors .affiliations p { margin: 4px 0; }
+  .authors .corresponding {
+    margin-top: 10px;
+    font-size: 14px;
+  }
 </style>
 </head>
 <body>
@@ -224,6 +246,29 @@
     </div>
   </div>
 </header>
+
+<section id="authors" class="authors">
+  <div class="wrap">
+    <h2 style="text-align:left">Authors</h2>
+    <p class="author-list">
+      Kok Chung Chua<sup>1</sup>,
+      Matthew Alexander Paudianto<sup>1</sup>,
+      Abel Nathanael Hutapea<sup>1</sup>,
+      Ivan Nathanael<sup>1</sup>,
+      Chean Khim Toa<sup>1,&#9993;</sup>,
+      Ming Kai Jiang<sup>2</sup>,
+      Jia Cheng Lin<sup>1</sup>
+    </p>
+    <div class="affiliations">
+      <p><sup>1</sup> School of Computing and Data Science, Xiamen University Malaysia, Sepang, Selangor, Malaysia.</p>
+      <p><sup>2</sup> School of Artificial Intelligence and Robotics, Xiamen University Malaysia, Sepang, Selangor, Malaysia.</p>
+      <p class="corresponding">
+        Contact: Kok Chung Chua &mdash; <a href="mailto:CST2209659@xmu.edu.my">CST2209659@xmu.edu.my</a><br>
+        <sup>&#9993;</sup> Corresponding author: Chean Khim Toa &mdash; <a href="mailto:cheankhim.toa@xmu.edu.my">cheankhim.toa@xmu.edu.my</a>
+      </p>
+    </div>
+  </div>
+</section>
 
 <section id="overview">
   <div class="wrap">
