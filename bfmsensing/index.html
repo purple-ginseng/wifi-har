@@ -297,8 +297,11 @@
     background: var(--pal-sky);
   }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.highlight {
+    background: linear-gradient(90deg, rgba(196,217,255,0.32), rgba(197,186,255,0.32));
+  }
   tr.highlight td {
-    background: linear-gradient(90deg, rgba(196,217,255,0.35), rgba(197,186,255,0.35));
+    background: transparent;
     font-weight: 600;
     color: var(--fg);
   }
@@ -432,21 +435,6 @@
       cross-environment accuracy &mdash; without firmware patching or CSI
       extraction.
     </p>
-
-    <figure style="margin-top:28px">
-      <img src="figures/fig01_overview.png" alt="Overall architecture" loading="lazy">
-      <figcaption>
-        <strong>Overall architecture.</strong> (a) Compressed IEEE&nbsp;802.11ac
-        VHT beamforming feedback is acquired from a router-monitor pair in a
-        controlled indoor setting. (b) A seven-stage feature engineering
-        pipeline transforms raw BFM angles through decompression, ratio
-        computation, SNR filtering, PCA-based subcarrier aggregation
-        (n=1), Winsorization, robust moving standardization, and acceleration
-        extraction. (c) Feature discriminability between standing and walking
-        is validated via the Mann-Whitney U test. (d) A logistic regression
-        classifier performs binary locomotion detection.
-      </figcaption>
-    </figure>
   </div>
 </section>
 
