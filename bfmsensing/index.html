@@ -48,10 +48,40 @@
     font-size: clamp(34px, 5vw, 56px);
     margin: 0 0 16px;
     line-height: 1.1;
-    background: linear-gradient(90deg, #fff 30%, var(--accent) 70%, var(--accent-2));
+    position: relative;
+    display: inline-block;
+    background: linear-gradient(
+      90deg,
+      var(--accent-2) 0%,
+      var(--accent) 25%,
+      #ffffff 50%,
+      var(--accent) 75%,
+      var(--accent-2) 100%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 0;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    animation: hero-shimmer 5s linear infinite, hero-glow 3.2s ease-in-out infinite;
+  }
+  @keyframes hero-shimmer {
+    0%   { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+  @keyframes hero-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 4px rgba(106,166,255,0.25))
+              drop-shadow(0 0 10px rgba(157,123,255,0.18));
+    }
+    50% {
+      filter: drop-shadow(0 0 16px rgba(106,166,255,0.7))
+              drop-shadow(0 0 32px rgba(157,123,255,0.55))
+              drop-shadow(0 0 60px rgba(157,123,255,0.35));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    h1 { animation: none; background-position: 50% 0; }
   }
   .lede {
     font-size: 18px;
