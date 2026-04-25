@@ -410,30 +410,22 @@
       accuracy problem. The cause is hardware.
     </p>
     <p>
-      Most Wi-Fi sensing systems depend on Channel State Information (CSI),
-      which demands vendor-specific drivers, firmware patches, or a multi-device
-      bistatic setup. Although the Beamforming Feedback Matrix (BFM) is exposed
-      by the IEEE&nbsp;802.11ac standard itself, existing BFM work still assumes
-      physically separated transmitters and receivers, which blocks residential
-      and edge-side deployment.
+      Most Wi-Fi sensing today reads Channel State Information (CSI), and
+      reading CSI requires patched drivers or custom firmware on the wireless
+      card. The Beamforming Feedback Matrix (BFM) avoids that &mdash; IEEE&nbsp;802.11ac
+      already exposes it as part of normal channel sounding &mdash; but every
+      published BFM sensing system still puts transmitter and receiver on
+      separate devices. Either path stays in the lab.
     </p>
     <p>
-      We present a firmware-agnostic HLD framework that runs on a single
-      commercial access point. It requires no driver modification and no
-      PHY-layer patching. The framework extracts BFM signals directly from
-      standard IEEE&nbsp;802.11ac feedback frames using stock administrative
-      utilities, removing the driver access that CSI sensing demands. A
-      lightweight feature engineering pipeline isolates locomotion-induced
-      perturbations from static environmental noise, handling the
-      non-stationarity, high dimensionality, and quantization artifacts
-      inherent to compressed beamforming.
+      Our framework reads BFM from a single off-the-shelf access point: no
+      patched drivers, no PHY-layer changes, no second sensing device. A short
+      feature pipeline cleans the compressed beamforming data, isolates the
+      perturbations that human motion injects into the channel, and feeds a
+      logistic regression classifier that decides walking versus standing.
     </p>
     <p>
-      Across 150 sessions from 5 subjects in 3 propagation environments, under
-      a Leave-One-Subject-Out (LOSO) protocol, the model reaches 98.30%
-      intra-environment accuracy on unseen subjects and 94.94% mean
-      cross-environment accuracy &mdash; without firmware patching or CSI
-      extraction.
+      On 150 sessions across 5&nbsp;subjects and 3&nbsp;multipath environments, evaluated with strict Leave-One-Subject-Out splits, the framework reaches <strong>98.30%</strong>&nbsp;intra-environment accuracy on unseen subjects and <strong>94.94%</strong>&nbsp;mean cross-environment accuracy. One commodity router. Stock firmware. No CSI.
     </p>
 
     <figure style="margin-top:28px">
@@ -479,49 +471,46 @@
   <div class="wrap">
     <h2>Acquisition and pipeline</h2>
     <p class="section-lede">
-      A single commodity 802.11ac AP captures protocol-compliant beamforming
-      feedback during controlled human locomotion. Packet captures are decoded
-      to per-subcarrier complex frequency responses, from which magnitude and
-      phase features are derived for temporal analysis and inference.
+      A single commodity 802.11ac AP captures protocol-compliant beamforming feedback during controlled human locomotion. Each packet decodes into a per-subcarrier complex frequency response. Magnitude and phase features are derived from that response and fed into the temporal pipeline for inference.
     </p>
     <figure>
       <img src="figures/fig02_acquisition.png" alt="Data acquisition and BFM extraction pipeline" loading="lazy">
       <figcaption>
-        Data acquisition and BFM extraction pipeline. The AP logs each returned
-        report on its wireless interface, drops the PCAP to local storage, and
-        hands the file off for offline processing.
+        <strong>Data acquisition and BFM extraction.</strong> The AP logs each
+        returned beamforming report on its wireless interface, writes the PCAP
+        to local storage, and hands the file off for offline processing.
       </figcaption>
     </figure>
 
     <h3>Seven processing stages</h3>
     <ol class="pipeline">
       <li>
-        <strong>BFM Reconstruction</strong>
-        <p>The AP emits Compressed Beamforming Feedback (CBF). We invert the Givens rotations to rebuild the 2&times;1 BFM for each of the 234 subcarriers from the angles &phi;<sub>11</sub> and &psi;<sub>21</sub>.</p>
+        <strong>BFM reconstruction</strong>
+        <p>The AP emits Compressed Beamforming Feedback (CBF). We invert the Givens rotations to rebuild the 2&times;1 BFM for each of the 234 subcarriers from the quantized angles &phi;<sub>11</sub> and &psi;<sub>21</sub>.</p>
       </li>
       <li>
-        <strong>BFM-Ratio Derivation</strong>
-        <p>Dividing one antenna's coefficient by the other's cancels the time-varying singular value and the common phase, leaving one complex value per subcarrier that retains the relative amplitude and phase.</p>
+        <strong>BFM-ratio derivation</strong>
+        <p>Dividing one antenna's coefficient by the other cancels the time-varying singular value and the common phase, leaving a single complex value per subcarrier that preserves the relative amplitude and phase.</p>
       </li>
       <li>
-        <strong>Magnitude-based Filtering</strong>
-        <p>Packets with mean BFM-ratio magnitude below 5 are dropped. Below this threshold, phase reconstruction injects spurious spikes; the threshold is data-driven from a bimodal magnitude distribution with a stable valley near 5.</p>
+        <strong>Magnitude-based filtering</strong>
+        <p>Packets whose mean BFM-ratio magnitude falls below 5 are dropped. Below that level, phase reconstruction injects spurious spikes. The threshold is not tuned by hand: the global magnitude distribution is bimodal, with a stable valley around 5 separating reliable packets from low-SNR ones.</p>
       </li>
       <li>
-        <strong>PCA Subcarrier Aggregation</strong>
-        <p>PCA is applied across 234 subcarriers separately to magnitude and phase. Only the first principal component is retained, producing scalar features PCA<sub>mag</sub> and PCA<sub>phase</sub> per time step. Per-modality PCA preserves the dominant energy modes of both signals.</p>
+        <strong>PCA subcarrier aggregation</strong>
+        <p>PCA runs across the 234 subcarriers separately on magnitude and phase. Only the first principal component is retained, yielding scalar features PCA<sub>mag</sub> and PCA<sub>phase</sub> per time step. Running PCA per modality preserves the dominant variance in each, rather than letting the larger-scale magnitude swamp the phase dynamics.</p>
       </li>
       <li>
-        <strong>Temporal Feature Engineering</strong>
-        <p>Winsorization (100-sample window, Tukey's rule) clips outliers in place. Robust moving standardization subtracts the moving median and divides by the median absolute deviation to remove non-stationary baseline drift. The final Log-Mean Absolute Difference (LMAD) transform captures step-to-step roughness in a single scalar per modality.</p>
+        <strong>Temporal feature engineering</strong>
+        <p>Winsorization (100-sample window, Tukey's rule) clips outliers without removing time steps. A robust moving standardization then subtracts the rolling median and divides by the median absolute deviation, removing the non-stationary baseline drift typical of BFM. The Log-Mean Absolute Difference (LMAD) transform finally compresses step-to-step roughness into a single scalar per modality.</p>
       </li>
       <li>
-        <strong>Statistical Feature Selection</strong>
-        <p>The differencing order n is selected by a maximin criterion on a robust separation margin under LOSO cross-validation across the three environments. n = 3 wins the worst-case margin (2.3489) and worst-case AUC (0.9714).</p>
+        <strong>Statistical feature selection</strong>
+        <p>The differencing order n is fixed by a maximin criterion on a robust separation margin, evaluated under LOSO cross-validation across the three environments. n = 3 wins the worst-case margin (2.3489) and worst-case AUC (0.9714) &mdash; tight enough that orders 2 to 4 are interchangeable in practice.</p>
       </li>
       <li>
-        <strong>Lightweight Classification</strong>
-        <p>Logistic Regression with L2 regularization (C = 1.0, lbfgs) maps the 2-D LMAD feature to a binary decision. Higher-capacity models (SVM, MLP) produced no consistent gains; LR is the capacity-matched choice for edge inference.</p>
+        <strong>Lightweight classification</strong>
+        <p>Logistic regression with L2 regularization (C = 1.0, lbfgs) maps the 2-D LMAD feature to a binary decision. Higher-capacity models (SVM, MLP) produced no consistent gains in preliminary tests, so LR is the capacity-matched choice for edge inference.</p>
       </li>
     </ol>
 
@@ -575,18 +564,18 @@
 
     <h3>Hardware</h3>
     <ul>
-      <li><strong>Access point:</strong> D-Link DIR-842 (IEEE&nbsp;802.11ac), stock firmware replaced with OpenWrt for edge-level <code>tcpdump</code> capture.</li>
-      <li><strong>Client:</strong> POCO M4 Pro smartphone running <code>iperf3 -R</code> to drive downstream traffic and trigger BFM frames.</li>
-      <li><strong>Reflection enclosure:</strong> 11.7 &times; 5.3 &times; 21&nbsp;cm aluminum-foil-lined box housing the client to suppress local stray reflections.</li>
-      <li><strong>Acquisition system:</strong> custom Python interface synchronizing remote <code>tcpdump</code>, automatic PCAP transfer, session labeling, and BFM extraction.</li>
+      <li><strong>Access point:</strong> D-Link DIR-842 (IEEE&nbsp;802.11ac), stock firmware replaced with OpenWrt to allow edge-level <code>tcpdump</code> capture.</li>
+      <li><strong>Client:</strong> POCO M4 Pro smartphone running <code>iperf3 -R</code> against the AP, which forces downstream traffic and triggers BFM frames.</li>
+      <li><strong>Reflection enclosure:</strong> a 11.7 &times; 5.3 &times; 21&nbsp;cm aluminum-foil-lined box housing the client, to suppress local stray reflections around the device.</li>
+      <li><strong>Acquisition system:</strong> a custom Python interface that drives remote <code>tcpdump</code>, transfers PCAPs back automatically, labels sessions, and runs BFM extraction.</li>
     </ul>
 
     <h3>Environments</h3>
-    <p>The three settings form a multipath gradient that stresses the BFM features across varying multipath severity and spatial selectivity.</p>
+    <p>The three settings form a multipath gradient that stresses the BFM features across varying multipath severity and spatial selectivity, from a clean baseline to an adversarial enclosure.</p>
     <ul>
-      <li><strong>Open</strong> &mdash; baseline; minimal local multipath.</li>
-      <li><strong>No-Foil</strong> &mdash; wooden dividers enclose the area; moderate multipath without metallic cladding.</li>
-      <li><strong>Foil</strong> &mdash; same dividers with aluminum foil interior; specular multipath, standing-wave interference. Adversarial on purpose.</li>
+      <li><strong>Open</strong> &mdash; baseline. Nothing surrounds the subject, so local multipath stays minimal.</li>
+      <li><strong>No-Foil</strong> &mdash; wooden dividers enclose the area, producing moderate multipath without metallic cladding.</li>
+      <li><strong>Foil</strong> &mdash; the same dividers, with the inner surfaces lined in aluminum foil. Specular multipath and standing-wave interference. Adversarial on purpose.</li>
     </ul>
 
     <div class="figure-row">
